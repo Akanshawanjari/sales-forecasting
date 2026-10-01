@@ -100,4 +100,112 @@ possible_sales_columns = [
     "Sales",
     "sales",
     "Total Sales",
-    "Total
+    "Total_Sales",
+    "Revenue",
+    "revenue"
+]
+
+for column in possible_sales_columns:
+    if column in df.columns:
+        sales_column = column
+        break
+
+
+# ---------------------------------------------------
+# MODEL
+# ---------------------------------------------------
+
+if sales_column is not None:
+
+    st.subheader("🤖 Multiple Linear Regression Model")
+
+    # Convert sales column to numeric
+    df[sales_column] = pd.to_numeric(
+        df[sales_column],
+        errors="coerce"
+    )
+
+    df = df.dropna(subset=[sales_column])
+
+    # Features
+    features = ["Year", "Month", "Day"]
+
+    X = df[features]
+    y = df[sales_column]
+
+    # Create model
+    model = LinearRegression()
+
+    # Train model
+    model.fit(X, y)
+
+    # Predictions
+    df["Predicted Sales"] = model.predict(X)
+
+    st.success("✅ Model trained successfully!")
+
+    # ---------------------------------------------------
+    # MODEL RESULTS
+    # ---------------------------------------------------
+
+    st.subheader("📈 Prediction Results")
+
+    st.dataframe(
+        df[["Date", sales_column, "Predicted Sales"]],
+        use_container_width=True
+    )
+
+    # ---------------------------------------------------
+    # FUTURE PREDICTION
+    # ---------------------------------------------------
+
+    st.subheader("🔮 Future Sales Prediction")
+
+    future_date = st.date_input(
+        "Select a future date"
+    )
+
+    future_date = pd.to_datetime(future_date)
+
+    future_data = pd.DataFrame({
+        "Year": [future_date.year],
+        "Month": [future_date.month],
+        "Day": [future_date.day]
+    })
+
+    prediction = model.predict(future_data)
+
+    st.metric(
+        "Predicted Sales",
+        f"{prediction[0]:,.2f}"
+    )
+
+    # ---------------------------------------------------
+    # COEFFICIENTS
+    # ---------------------------------------------------
+
+    st.subheader("📊 Model Coefficients")
+
+    coefficient_df = pd.DataFrame({
+        "Feature": features,
+        "Coefficient": model.coef_
+    })
+
+    st.dataframe(
+        coefficient_df,
+        use_container_width=True
+    )
+
+else:
+
+    st.error(
+        "❌ Sales column not found in your CSV file."
+    )
+
+    st.write("Your CSV columns are:")
+    st.write(list(df.columns))
+
+    st.info(
+        "Please make sure your dataset has a column named "
+        "'Sales' or 'Revenue'."
+    )
